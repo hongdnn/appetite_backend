@@ -4,6 +4,7 @@ from sqlmodel import func, select
 from src.infrastructure.database import get_session
 from src.models.food import FoodModel
 from src.models.food_ingredient import FoodIngredientModel
+from src.models.ingredient import IngredientModel
 from src.repositories.base_repository import BaseRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -60,6 +61,37 @@ class FoodRepository(BaseRepository[FoodModel]):
                 foods.append(food)
             return foods
         
-
+    async def get_food_by_id(self, food_id: str):
+        async with self.session.begin():
+            statement = (
+                select(
+                    FoodModel, 
+                    FoodIngredientModel,
+                    IngredientModel
+                )
+                .outerjoin(
+                    FoodIngredientModel, 
+                    FoodModel.id == FoodIngredientModel.food_id
+                )
+                .outerjoin(
+                    IngredientModel,
+                    FoodIngredientModel.ingredient_id == IngredientModel.id
+                )
+                .where(FoodModel.id == food_id)
+            )
+        
+            result = await self.session.execute(statement)
+            rows = result.all()
+            
+            if not rows:
+                return None
+                
+            food = rows[0][0]
+            ingredients = []
+            food_ingredients = [row[1] for row in rows if row[1] is not None]
+            ingredients = [row[2] for row in rows if row[2] is not None]
+            return {"food": food, "food_ingredients": food_ingredients,  "ingredients": ingredients}
+    
+    
 def get_food_repository(session: AsyncSession = Depends(get_session)):
     return FoodRepository(session)
