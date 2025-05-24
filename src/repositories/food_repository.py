@@ -61,7 +61,8 @@ class FoodRepository(BaseRepository[FoodModel]):
                 foods.append(food)
             return foods
         
-    async def get_food_by_id(self, food_id: str):
+    async def get_food_detail_by_id(self, food_id: str):
+        """Get every detail by id"""
         async with self.session.begin():
             statement = (
                 select(
@@ -91,6 +92,16 @@ class FoodRepository(BaseRepository[FoodModel]):
             food_ingredients = [row[1] for row in rows if row[1] is not None]
             ingredients = [row[2] for row in rows if row[2] is not None]
             return {"food": food, "food_ingredients": food_ingredients,  "ingredients": ingredients}
+        
+    async def get_food_by_id(self, food_id: str):
+        """Get general information by id"""
+        async with self.session.begin():
+            statement = (
+                select(FoodModel)
+                .where(FoodModel.id == food_id)
+            )
+            result = await self.session.execute(statement)
+            return result.scalar_one_or_none()
     
     
 def get_food_repository(session: AsyncSession = Depends(get_session)):

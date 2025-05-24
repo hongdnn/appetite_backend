@@ -1,7 +1,8 @@
 from fastapi import Depends
 from src.infrastructure.config import Config
+from src.pytorch_model.pytorch_model import FoodImageModel, preprocess_image
 from src.repositories.food_repository import FoodRepository, get_food_repository
-
+from PIL import Image
 
 class FoodService:
     def __init__(self, food_repository: FoodRepository = Depends(get_food_repository)):
@@ -18,7 +19,7 @@ class FoodService:
         
     async def get_food_by_id(self, food_id: str):
         try:
-            response = await self.food_repository.get_food_by_id(food_id)
+            response = await self.food_repository.get_food_detail_by_id(food_id)
             if not response:
                 return {"status": 1, "message": "Food not found"}
             
@@ -44,5 +45,19 @@ class FoodService:
         try:
             response = await self.food_repository.create(food_data)
             return { "status": 0, "data": response }
+        except Exception as e:
+            return { "status": 2, "message": f"An unexpected error occurred" }
+        
+    async def search_food_by_image(self, image: Image):
+        try:
+            image_tensor = preprocess_image(image)
+            food_result, max_prob = FoodImageModel.predict_food(image_tensor)
+            print(food_result, max_prob)
+            if max_prob <= 0.8:
+                return { "status": 1, "message": "No food found for this image" }
+            food = await self.food_repository.get_food_by_id(food_result)
+            if food is None:
+                return { "status": 1, "message": "No food found" }
+            return { "status": 0, "data": food, "message": "Search food success" }
         except Exception as e:
             return { "status": 2, "message": f"An unexpected error occurred" }
