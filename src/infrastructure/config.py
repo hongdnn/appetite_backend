@@ -12,3 +12,6 @@ class Config:
     ALGORITHM = os.getenv('ALGORITHM')
     ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES')
     BUCKET_URL = os.getenv('BUCKET_URL')
+    API_BASE_URL = os.getenv('API_BASE_URL')
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+    AGENT_AUTH_TOKEN = os.getenv('AGENT_AUTH_TOKEN')

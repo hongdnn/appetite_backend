@@ -26,6 +26,10 @@ async def get_current_user(token: Optional[str] = Depends(oauth2_scheme)) -> Dic
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Check if the token is the agent's auth token
+    if token == Config.AGENT_AUTH_TOKEN:
+        return {"user_id": "agent", "role": "agent"}
+    
     try:
         payload = jwt.decode(
             token, 
